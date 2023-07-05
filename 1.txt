@@ -1,1 +1,45 @@
-this is test file
+import com.filenet.api.util.UserContext;
+import com.filenet.api.core.Connection;
+import com.filenet.api.core.Factory;
+import com.filenet.api.core.ObjectStore;
+
+public class FileNetHealthCheck {
+
+    public static void main(String[] args) {
+        String connectionString = "http://localhost:9080/wsi/FNCEWS40MTOM";
+        String username = "your_username";
+        String password = "your_password";
+
+        Connection connection = null;
+        ObjectStore objectStore = null;
+        try {
+            UserContext uc = UserContext.get();
+            uc.pushSubject(UserContext.createSubject(connectionString, username, password, "FileNetP8WSI"));
+
+            // Get the Connection object
+            connection = Factory.Connection.getConnection(connectionString);
+
+            // Get the ObjectStore instance
+            objectStore = Factory.ObjectStore.fetchInstance(connection, "ObjectStoreName", null);
+
+            System.out.println("FileNet P8 is available and the connection was successful.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("FileNet P8 is not available or the connection failed.");
+        } finally {
+            if (objectStore != null) {
+                objectStore.get_RootFolder().fetchSubFolders(0);
+                objectStore = null;
+            }
+            if (connection != null) {
+                connection.close();
+            }
+        }
+    }
+}
+//////////////////////////
+The code attempts to establish a connection to the FileNet P8 repository using the provided credentials. If the connection is successful, it prints a message indicating that FileNet P8 is available. Otherwise, it prints an error message.
+
+Note that the code also fetches the subfolders of the Object Store's root folder as a way to further verify the accessibility of the repository.
+
+Make sure to include the necessary FileNet P8 API JAR files in your project's classpath for compilation and execution
