@@ -1,42 +1,23 @@
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Base64;
 
-public class ReadBase64WriteByteArray {
+public class ReadWriteBytes {
 
   public static void main(String[] args) {
-    try {
-      // Read base64 data from 1.txt
-      byte[] base64Data = readBase64FromFile("1.txt");
+    try (FileInputStream inputStream = new FileInputStream("1.txt");
+         FileOutputStream outputStream = new FileOutputStream("bytes.txt")) {
+      byte[] buffer = new byte[1024]; // Adjust buffer size as needed
+      int bytesRead;
 
-      // Decode the base64 data
-      byte[] decodedByteArray = Base64.getDecoder().decode(base64Data);
+      // Read bytes from the input file and write them to the output file
+      while ((bytesRead = inputStream.read(buffer)) > 0) {
+        outputStream.write(buffer, 0, bytesRead);
+      }
 
-      // Write decoded byte array to byte_array.txt
-      writeByteArrayToFile(decodedByteArray, "byte_array.txt");
-
-      System.out.println("Base64 data decoded and written to byte_array.txt successfully!");
-    } catch (FileNotFoundException e) {
-      System.err.println("Error: File '1.txt' not found.");
+      System.out.println("File content successfully copied to bytes.txt");
     } catch (IOException e) {
-      System.err.println("An error occurred: " + e.getMessage());
-    }
-  }
-
-  private static byte[] readBase64FromFile(String fileName) throws IOException {
-    try (FileInputStream inputStream = new FileInputStream(fileName)) {
-      // Read the entire file content into a byte array
-      byte[] data = new byte[inputStream.available()];
-      inputStream.read(data);
-      return data;
-    }
-  }
-
-  private static void writeByteArrayToFile(byte[] data, String fileName) throws IOException {
-    try (FileOutputStream outputStream = new FileOutputStream(fileName)) {
-      outputStream.write(data);
+      System.err.println("Error: " + e.getMessage());
     }
   }
 }
