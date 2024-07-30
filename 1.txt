@@ -1,57 +1,11 @@
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Scanner;
-
-public class HexToBinary {
-
-  public static void main(String[] args) throws IOException {
-    String fileName = "hex.txt";
-    String outputFileName = "binary.txt";
-
-    // Read hex string from file
-    String hexString = readHexStringFromFile(fileName);
-
-    // Convert hex string to byte array
-    byte[] binaryData = hexStringToByteArray(hexString);
-
-    // Write binary data to a new file
-    writeByteArrayToFile(binaryData, outputFileName);
-
-    System.out.println("Converted hex string from " + fileName + " to binary data and written to " + outputFileName);
-  }
-
-  private static String readHexStringFromFile(String fileName) throws IOException {
-    File file = new File(fileName);
-    Scanner scanner = new Scanner(file);
-    String hexString = scanner.nextLine().trim(); // Assuming only one line in hex.txt
-    scanner.close();
-    return hexString;
-  }
-
-  private static byte[] hexStringToByteArray(String hexString) {
-    int len = hexString.length();
-    if (len % 2 != 0) {
-      throw new IllegalArgumentException("Invalid hex string: uneven length");
-    }
-
-    byte[] data = new byte[len / 2];
-    for (int i = 0; i < len; i += 2) {
-      // Convert each hex character to a byte value
-      byte high = (byte) (Character.digit(hexString.charAt(i), 16) << 4);
-      byte low = (byte) (Character.digit(hexString.charAt(i + 1), 16));
-
-      // Combine the high and low nibbles into a single byte
-      data[i / 2] = (byte) (high | low);
-    }
-    return data;
-  }
-
-  private static void writeByteArrayToFile(byte[] data, String fileName) throws IOException {
-    FileOutputStream fos = new FileOutputStream(fileName);
-    fos.write(data);
-    fos.close();
-  }
-}
-
+SELECT t1.person_id, t2.pass_type
+FROM your_table_name t1
+INNER JOIN (
+  SELECT person_id
+  FROM your_table_name
+  WHERE status = 'VALID'
+  GROUP BY person_id
+  ORDER BY COUNT(DISTINCT pass_type) DESC
+  FETCH FIRST 10 ROWS ONLY
+) t2 ON t1.person_id = t2.person_id
+WHERE t1.status = 'VALID';
