@@ -1,11 +1,20 @@
-SELECT t1.person_id, t2.pass_type
-FROM your_table_name t1
-INNER JOIN (
-  SELECT person_id
-  FROM your_table_name
-  WHERE status = 'VALID'
-  GROUP BY person_id
-  ORDER BY COUNT(DISTINCT pass_type) DESC
-  FETCH FIRST 10 ROWS ONLY
-) t2 ON t1.person_id = t2.person_id
-WHERE t1.status = 'VALID';
+import java.util.Calendar;
+import java.util.TimeZone;
+
+public class TimeZoneDifference {
+    public static void main(String[] args) {
+        TimeZone torontoTimeZone = TimeZone.getTimeZone("America/Toronto");
+        TimeZone parisTimeZone = TimeZone.getTimeZone("Europe/Paris");
+
+        Calendar torontoCalendar = Calendar.getInstance(torontoTimeZone);
+        Calendar parisCalendar = Calendar.getInstance(parisTimeZone);
+
+        // Get the raw offset in milliseconds
+        long rawOffset = parisTimeZone.getRawOffset() - torontoTimeZone.getRawOffset();
+
+        // Convert milliseconds to hours
+        int hoursDifference = (int) (rawOffset / (1000 * 60 * 60));
+
+        System.out.println("Time difference between Toronto and Paris: " + hoursDifference + " hours");
+    }
+}
