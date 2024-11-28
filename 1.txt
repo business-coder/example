@@ -1,20 +1,7 @@
-import java.util.Calendar;
-import java.util.TimeZone;
+SMART Goal:
 
-public class TimeZoneDifference {
-    public static void main(String[] args) {
-        TimeZone torontoTimeZone = TimeZone.getTimeZone("America/Toronto");
-        TimeZone parisTimeZone = TimeZone.getTimeZone("Europe/Paris");
-
-        Calendar torontoCalendar = Calendar.getInstance(torontoTimeZone);
-        Calendar parisCalendar = Calendar.getInstance(parisTimeZone);
-
-        // Get the raw offset in milliseconds
-        long rawOffset = parisTimeZone.getRawOffset() - torontoTimeZone.getRawOffset();
-
-        // Convert milliseconds to hours
-        int hoursDifference = (int) (rawOffset / (1000 * 60 * 60));
-
-        System.out.println("Time difference between Toronto and Paris: " + hoursDifference + " hours");
-    }
-}
+Specific: Migrate the [specific application name] application from its current monolithic architecture to a microservices architecture on Google Anthos, utilizing Google Cloud Storage for data storage.
+Measurable: Successfully deploy the migrated application to the Anthos environment by [specific date] with a 99.9% uptime SLA.
+Achievable: Allocate dedicated development and operations teams to work on the migration, break down the project into smaller, manageable tasks, and leverage Google's documentation and support resources.
+Relevant: The migration to a microservices architecture on Anthos will improve scalability, flexibility, and maintainability of the application, aligning with the organization's long-term technology strategy.
+Time-bound: Complete the migration and deployment by [specific date].
