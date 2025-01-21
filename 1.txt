@@ -1,7 +1,6 @@
-SMART Goal:
-
-Specific: Migrate the [specific application name] application from its current monolithic architecture to a microservices architecture on Google Anthos, utilizing Google Cloud Storage for data storage.
-Measurable: Successfully deploy the migrated application to the Anthos environment by [specific date] with a 99.9% uptime SLA.
-Achievable: Allocate dedicated development and operations teams to work on the migration, break down the project into smaller, manageable tasks, and leverage Google's documentation and support resources.
-Relevant: The migration to a microservices architecture on Anthos will improve scalability, flexibility, and maintainability of the application, aligning with the organization's long-term technology strategy.
-Time-bound: Complete the migration and deployment by [specific date].
+SELECT table_name
+FROM user_constraints
+WHERE r_constraint_name IN (SELECT constraint_name
+                            FROM user_constraints
+                            WHERE constraint_type IN ('P','U')
+                            AND table_name = UPPER('&tableOfInterest') )
