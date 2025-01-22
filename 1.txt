@@ -1,55 +1,138 @@
+// FileUploadController.java
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Base64;
-import java.nio.file.Files;
-/*
-String base64String = TiffBase64Converter.tiffToBase64("path/to/your/image.tiff");
-TiffBase64Converter.base64ToTiff(base64String, "path/to/save/output.tiff");
-*/
-public class TiffBase64Converter {
-    
-    /**
-     * Converts a TIFF image file to Base64 encoded string
-     * @param tiffFilePath Path to the TIFF file
-     * @return Base64 encoded string
-     * @throws IOException if file operations fail
-     */
-    public static String tiffToBase64(String tiffFilePath) throws IOException {
-        File tiffFile = new File(tiffFilePath);
-        byte[] fileContent = Files.readAllBytes(tiffFile.toPath());
-        return Base64.getEncoder().encodeToString(fileContent);
+@RestController
+@RequestMapping("/api/files")
+@Tag(name = "File Upload", description = "API for handling file uploads")
+public class FileUploadController {
+
+    private final FileUploadService fileUploadService;
+
+    @Autowired
+    public FileUploadController(FileUploadService fileUploadService) {
+        this.fileUploadService = fileUploadService;
     }
-    
-    /**
-     * Converts a Base64 encoded string back to TIFF image and saves it
-     * @param base64String The Base64 encoded string
-     * @param outputPath Path where the TIFF file should be saved
-     * @throws IOException if file operations fail
-     */
-    public static void base64ToTiff(String base64String, String outputPath) throws IOException {
-        byte[] imageBytes = Base64.getDecoder().decode(base64String);
-        try (FileOutputStream fos = new FileOutputStream(outputPath)) {
-            fos.write(imageBytes);
+
+    @PostMapping("/upload")
+    @Operation(
+        summary = "Upload XML and TIFF files",
+        description = "Upload XML and TIFF files to temporary directory",
+        responses = {
+            @ApiResponse(
+                responseCode = "200",
+                description = "Files uploaded successfully",
+                content = @Content(schema = @Schema(implementation = FileUploadResponse.class))
+            ),
+            @ApiResponse(
+                responseCode = "400",
+                description = "Invalid file format or upload failed"
+            )
+        }
+    )
+    public ResponseEntity<FileUploadResponse> uploadFiles(
+            @Parameter(description = "XML file to upload")
+            @RequestParam("xmlFile") MultipartFile xmlFile,
+            @Parameter(description = "TIFF file to upload")
+            @RequestParam("tiffFile") MultipartFile tiffFile) {
+
+        FileUploadResponse response = fileUploadService.uploadFiles(xmlFile, tiffFile);
+        return ResponseEntity.ok(response);
+    }
+}
+
+// FileUploadService.java
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
+
+@Service
+public class FileUploadService {
+
+    private static final String TEMP_DIR = System.getProperty("java.io.tmpdir");
+
+    public FileUploadResponse uploadFiles(MultipartFile xmlFile, MultipartFile tiffFile) {
+        validateFiles(xmlFile, tiffFile);
+
+        try {
+            String xmlPath = saveFile(xmlFile, ".xml");
+            String tiffPath = saveFile(tiffFile, ".tiff");
+
+            return new FileUploadResponse(
+                xmlPath,
+                tiffPath,
+                "Files uploaded successfully"
+            );
+        } catch (IOException e) {
+            throw new FileUploadException("Failed to upload files: " + e.getMessage());
         }
     }
 
-    public static void main(String[] args) {
-        try {
-            // Example usage for converting TIFF to Base64
-            String base64String = tiffToBase64("input.tiff");
-            System.out.println("Base64 string: " + base64String.substring(0, 100) + "...");
+    private String saveFile(MultipartFile file, String extension) throws IOException {
+        String fileName = UUID.randomUUID().toString() + extension;
+        Path filePath = Paths.get(TEMP_DIR, fileName);
+        Files.copy(file.getInputStream(), filePath);
+        return filePath.toString();
+    }
 
-            // Example usage for converting Base64 back to TIFF
-            base64ToTiff(base64String, "output.tiff");
-            System.out.println("TIFF file has been created successfully!");
-            
-        } catch (IOException e) {
-            e.printStackTrace();
+    private void validateFiles(MultipartFile xmlFile, MultipartFile tiffFile) {
+        if (xmlFile.isEmpty() || tiffFile.isEmpty()) {
+            throw new FileUploadException("Both XML and TIFF files are required");
+        }
+
+        if (!xmlFile.getOriginalFilename().toLowerCase().endsWith(".xml")) {
+            throw new FileUploadException("Invalid XML file format");
+        }
+
+        if (!tiffFile.getOriginalFilename().toLowerCase().endsWith(".tiff") &&
+            !tiffFile.getOriginalFilename().toLowerCase().endsWith(".tif")) {
+            throw new FileUploadException("Invalid TIFF file format");
         }
     }
 }
-////////////////////////////////////////
 
+// FileUploadResponse.java
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Response object for file upload")
+public class FileUploadResponse {
+    
+    @Schema(description = "Path where XML file is stored")
+    private final String xmlFilePath;
+    
+    @Schema(description = "Path where TIFF file is stored")
+    private final String tiffFilePath;
+    
+    @Schema(description = "Status message of the upload")
+    private final String message;
+
+    public FileUploadResponse(String xmlFilePath, String tiffFilePath, String message) {
+        this.xmlFilePath = xmlFilePath;
+        this.tiffFilePath = tiffFilePath;
+        this.message = message;
+    }
+
+    // Getters
+    public String getXmlFilePath() { return xmlFilePath; }
+    public String getTiffFilePath() { return tiffFilePath; }
+    public String getMessage() { return message; }
+}
+
+// FileUploadException.java
+public class FileUploadException extends RuntimeException {
+    public FileUploadException(String message) {
+        super(message);
+    }
+}
