@@ -1,6 +1,55 @@
-SELECT table_name
-FROM user_constraints
-WHERE r_constraint_name IN (SELECT constraint_name
-                            FROM user_constraints
-                            WHERE constraint_type IN ('P','U')
-                            AND table_name = UPPER('&tableOfInterest') )
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Base64;
+import java.nio.file.Files;
+/*
+String base64String = TiffBase64Converter.tiffToBase64("path/to/your/image.tiff");
+TiffBase64Converter.base64ToTiff(base64String, "path/to/save/output.tiff");
+*/
+public class TiffBase64Converter {
+    
+    /**
+     * Converts a TIFF image file to Base64 encoded string
+     * @param tiffFilePath Path to the TIFF file
+     * @return Base64 encoded string
+     * @throws IOException if file operations fail
+     */
+    public static String tiffToBase64(String tiffFilePath) throws IOException {
+        File tiffFile = new File(tiffFilePath);
+        byte[] fileContent = Files.readAllBytes(tiffFile.toPath());
+        return Base64.getEncoder().encodeToString(fileContent);
+    }
+    
+    /**
+     * Converts a Base64 encoded string back to TIFF image and saves it
+     * @param base64String The Base64 encoded string
+     * @param outputPath Path where the TIFF file should be saved
+     * @throws IOException if file operations fail
+     */
+    public static void base64ToTiff(String base64String, String outputPath) throws IOException {
+        byte[] imageBytes = Base64.getDecoder().decode(base64String);
+        try (FileOutputStream fos = new FileOutputStream(outputPath)) {
+            fos.write(imageBytes);
+        }
+    }
+
+    public static void main(String[] args) {
+        try {
+            // Example usage for converting TIFF to Base64
+            String base64String = tiffToBase64("input.tiff");
+            System.out.println("Base64 string: " + base64String.substring(0, 100) + "...");
+
+            // Example usage for converting Base64 back to TIFF
+            base64ToTiff(base64String, "output.tiff");
+            System.out.println("TIFF file has been created successfully!");
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+////////////////////////////////////////
+
