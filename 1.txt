@@ -1,138 +1,28 @@
-// FileUploadController.java
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+// Assuming you have necessary X9sdk classes and imports
 
-@RestController
-@RequestMapping("/api/files")
-@Tag(name = "File Upload", description = "API for handling file uploads")
-public class FileUploadController {
+// 1. Create a minimal X9 file structure (replace with actual X9sdk code)
+X9File x9file = new X9File(); // Or appropriate X9.37 file object
+// ... populate necessary fields in x9file ...
 
-    private final FileUploadService fileUploadService;
+// 2. Read JPEG images
+BufferedImage image1 = ImageIO.read(new File("a.jpg"));
+BufferedImage image2 = ImageIO.read(new File("b.jpg"));
 
-    @Autowired
-    public FileUploadController(FileUploadService fileUploadService) {
-        this.fileUploadService = fileUploadService;
-    }
+// 3. Create an X9ImageWriter
+X9ImageWriter writer = new X9ImageWriter(); // Or get it from ImageIO
+writer.setX9File(x9file); // Associate with X9 file
 
-    @PostMapping("/upload")
-    @Operation(
-        summary = "Upload XML and TIFF files",
-        description = "Upload XML and TIFF files to temporary directory",
-        responses = {
-            @ApiResponse(
-                responseCode = "200",
-                description = "Files uploaded successfully",
-                content = @Content(schema = @Schema(implementation = FileUploadResponse.class))
-            ),
-            @ApiResponse(
-                responseCode = "400",
-                description = "Invalid file format or upload failed"
-            )
-        }
-    )
-    public ResponseEntity<FileUploadResponse> uploadFiles(
-            @Parameter(description = "XML file to upload")
-            @RequestParam("xmlFile") MultipartFile xmlFile,
-            @Parameter(description = "TIFF file to upload")
-            @RequestParam("tiffFile") MultipartFile tiffFile) {
+// 4. Configure TIFF output
+ImageOutputStream output = ImageIO.createImageOutputStream(new File("result.tiff"));
+writer.setOutput(output);
 
-        FileUploadResponse response = fileUploadService.uploadFiles(xmlFile, tiffFile);
-        return ResponseEntity.ok(response);
-    }
-}
+// 5. Write images (adapt this part for your needs)
+writer.write(image1); // Or writeToSequence() for multi-page TIFF
+writer.write(image2);
 
-// FileUploadService.java
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.UUID;
+// 6. Extract TIFF data (replace with actual extraction logic)
+byte[] tiffData = x9file.getImageData(); // Or similar method to get TIFF bytes
+// ... save tiffData to a TIFF file ...
 
-@Service
-public class FileUploadService {
-
-    private static final String TEMP_DIR = System.getProperty("java.io.tmpdir");
-
-    public FileUploadResponse uploadFiles(MultipartFile xmlFile, MultipartFile tiffFile) {
-        validateFiles(xmlFile, tiffFile);
-
-        try {
-            String xmlPath = saveFile(xmlFile, ".xml");
-            String tiffPath = saveFile(tiffFile, ".tiff");
-
-            return new FileUploadResponse(
-                xmlPath,
-                tiffPath,
-                "Files uploaded successfully"
-            );
-        } catch (IOException e) {
-            throw new FileUploadException("Failed to upload files: " + e.getMessage());
-        }
-    }
-
-    private String saveFile(MultipartFile file, String extension) throws IOException {
-        String fileName = UUID.randomUUID().toString() + extension;
-        Path filePath = Paths.get(TEMP_DIR, fileName);
-        Files.copy(file.getInputStream(), filePath);
-        return filePath.toString();
-    }
-
-    private void validateFiles(MultipartFile xmlFile, MultipartFile tiffFile) {
-        if (xmlFile.isEmpty() || tiffFile.isEmpty()) {
-            throw new FileUploadException("Both XML and TIFF files are required");
-        }
-
-        if (!xmlFile.getOriginalFilename().toLowerCase().endsWith(".xml")) {
-            throw new FileUploadException("Invalid XML file format");
-        }
-
-        if (!tiffFile.getOriginalFilename().toLowerCase().endsWith(".tiff") &&
-            !tiffFile.getOriginalFilename().toLowerCase().endsWith(".tif")) {
-            throw new FileUploadException("Invalid TIFF file format");
-        }
-    }
-}
-
-// FileUploadResponse.java
-import io.swagger.v3.oas.annotations.media.Schema;
-
-@Schema(description = "Response object for file upload")
-public class FileUploadResponse {
-    
-    @Schema(description = "Path where XML file is stored")
-    private final String xmlFilePath;
-    
-    @Schema(description = "Path where TIFF file is stored")
-    private final String tiffFilePath;
-    
-    @Schema(description = "Status message of the upload")
-    private final String message;
-
-    public FileUploadResponse(String xmlFilePath, String tiffFilePath, String message) {
-        this.xmlFilePath = xmlFilePath;
-        this.tiffFilePath = tiffFilePath;
-        this.message = message;
-    }
-
-    // Getters
-    public String getXmlFilePath() { return xmlFilePath; }
-    public String getTiffFilePath() { return tiffFilePath; }
-    public String getMessage() { return message; }
-}
-
-// FileUploadException.java
-public class FileUploadException extends RuntimeException {
-    public FileUploadException(String message) {
-        super(message);
-    }
-}
+writer.dispose();
+output.close();
