@@ -1,28 +1,51 @@
-// Assuming you have necessary X9sdk classes and imports
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageInputStream;
+import javax.imageio.stream.ImageOutputStream;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
-// 1. Create a minimal X9 file structure (replace with actual X9sdk code)
-X9File x9file = new X9File(); // Or appropriate X9.37 file object
-// ... populate necessary fields in x9file ...
+public class CombineJpgToTiff {
 
-// 2. Read JPEG images
-BufferedImage image1 = ImageIO.read(new File("a.jpg"));
-BufferedImage image2 = ImageIO.read(new File("b.jpg"));
+    public static void main(String[] args) throws IOException {
+        // Input image files
+        File imageFile1 = new File("a.jpg");
+        File imageFile2 = new File("b.jpg");
 
-// 3. Create an X9ImageWriter
-X9ImageWriter writer = new X9ImageWriter(); // Or get it from ImageIO
-writer.setX9File(x9file); // Associate with X9 file
+        // Output TIFF file
+        File tiffFile = new File("result.tiff");
 
-// 4. Configure TIFF output
-ImageOutputStream output = ImageIO.createImageOutputStream(new File("result.tiff"));
-writer.setOutput(output);
+        // Read JPEG images
+        List<BufferedImage> images = new ArrayList<>();
+        images.add(ImageIO.read(imageFile1));
+        images.add(ImageIO.read(imageFile2));
 
-// 5. Write images (adapt this part for your needs)
-writer.write(image1); // Or writeToSequence() for multi-page TIFF
-writer.write(image2);
+        // Get TIFF writer
+        Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("tiff");
+        if (!writers.hasNext()) {
+            throw new IllegalStateException("No TIFF writer found");
+        }
+        ImageWriter writer = writers.next();
 
-// 6. Extract TIFF data (replace with actual extraction logic)
-byte[] tiffData = x9file.getImageData(); // Or similar method to get TIFF bytes
-// ... save tiffData to a TIFF file ...
+        // Create TIFF file
+        ImageOutputStream output = ImageIO.createImageOutputStream(tiffFile);
+        writer.setOutput(output);
 
-writer.dispose();
-output.close();
+        // Write TIFF image
+        try {
+            writer.prepareWriteSequence(null);
+            for (BufferedImage image : images) {
+                writer.writeToSequence(new IIOImage(image, null, null), null);
+            }
+            writer.endWriteSequence();
+        } finally {
+            writer.dispose();
+            output.close();
+        }
+    }
+}
