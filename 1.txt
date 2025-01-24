@@ -1,9 +1,6 @@
 import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
 import javax.imageio.ImageWriter;
-import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -11,26 +8,20 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class CombineJpgToTiff {
+public class CombineTiffToTiff {
 
     public static void main(String[] args) throws IOException {
-        // Input JPG files
-        File file1 = new File("a.jpg");
-        File file2 = new File("b.jpg");
+        // Input TIFF files
+        File file1 = new File("1.tiff");
+        File file2 = new File("2.tiff");
 
         // Output TIFF file
         File outputFile = new File("result.tiff");
 
-        // Read JPG images
+        // Read TIFF images
         List<BufferedImage> images = new ArrayList<>();
         images.add(ImageIO.read(file1));
         images.add(ImageIO.read(file2));
-
-        // Convert to black and white and resize
-        List<BufferedImage> processedImages = new ArrayList<>();
-        for (BufferedImage image : images) {
-            processedImages.add(processImage(image));
-        }
 
         // Get TIFF writer
         Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("tiff");
@@ -43,16 +34,16 @@ public class CombineJpgToTiff {
         ImageOutputStream ios = ImageIO.createImageOutputStream(outputFile);
         writer.setOutput(ios);
 
-        // Set TIFF compression
-        ImageWriteParam params = writer.getDefaultWriteParam();
-        params.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-        params.setCompressionType("LZW");
+        // Set TIFF compression (optional - uncomment if needed)
+        // ImageWriteParam params = writer.getDefaultWriteParam();
+        // params.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+        // params.setCompressionType("LZW"); 
 
         // Write TIFF image
         try {
-            writer.write(null, new javax.imageio.IIOImage(processedImages.get(0), null, null), params);
-            for (int i = 1; i < processedImages.size(); i++) {
-                writer.writeInsert(i, new javax.imageio.IIOImage(processedImages.get(i), null, null), params);
+            writer.write(null, new javax.imageio.IIOImage(images.get(0), null, null), null); 
+            for (int i = 1; i < images.size(); i++) {
+                writer.writeInsert(i, new javax.imageio.IIOImage(images.get(i), null, null), null); 
             }
         } finally {
             // Close streams and dispose resources
@@ -61,21 +52,5 @@ public class CombineJpgToTiff {
         }
 
         System.out.println("TIFF image created successfully!");
-    }
-
-    private static BufferedImage processImage(BufferedImage image) {
-        // Convert to grayscale
-        BufferedImage grayImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
-        Graphics g = grayImage.getGraphics();
-        g.drawImage(image, 0, 0, null);
-        g.dispose();
-
-        // Resize (adjust newWidth and newHeight as needed)
-        int newWidth = grayImage.getWidth() / 2; 
-        int newHeight = grayImage.getHeight() / 2;
-        BufferedImage resizedImage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_BYTE_GRAY);
-        resizedImage.getGraphics().drawImage(grayImage.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH), 0, 0, null);
-
-        return resizedImage;
     }
 }
