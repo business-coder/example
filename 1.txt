@@ -1,1 +1,12 @@
-5566
+# Load the compression library
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+# Define input (.gz) and output (.log) filenames
+$inFile = ".\1.log.gz"
+$outFile = ".\1.log"
+
+# Decompress the .gz file
+[System.IO.Compression.GZipStream]::Uncompress(
+  [System.IO.File]::OpenRead($inFile),
+  [System.IO.File]::Create($outFile)
+)
